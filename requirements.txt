@@ -1,5 +1,7 @@
 fastapi
 uvicorn
-scikit-learn
+python-dotenv
 numpy
 pydantic
+scikit-learn
+

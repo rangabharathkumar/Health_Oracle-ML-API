@@ -2,16 +2,22 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import pickle
 import numpy as np
+import os
+from dotenv import load_dotenv
 
-# Load Models
-obesity_model = pickle.load(open("Obesity_Prediction_Model.pkl", "rb"))
-obesity_encoder = pickle.load(open("Obesity_Label_Encoder.pkl", "rb"))
+# Load environment variables (only works locally, not needed on Render)
+load_dotenv()
 
-insomnia_model = pickle.load(open("Insomnia_model.pkl", "rb"))
-insomnia_encoder = pickle.load(open("Insomnia_label_encoders.pkl", "rb"))
+# Load Models using environment variables (fallback to local paths for dev)
+obesity_model = pickle.load(open(os.getenv("OBESITY_MODEL", "Obesity_Prediction_Model.pkl"), "rb"))
+obesity_encoder = pickle.load(open(os.getenv("OBESITY_ENCODER", "Obesity_Label_Encoder.pkl"), "rb"))
 
-diabetes_model = pickle.load(open("diabetes_prediction_model.pkl", "rb"))
+insomnia_model = pickle.load(open(os.getenv("INSOMNIA_MODEL", "Insomnia_model.pkl"), "rb"))
+insomnia_encoder = pickle.load(open(os.getenv("INSOMNIA_ENCODER", "Insomnia_label_encoders.pkl"), "rb"))
 
+diabetes_model = pickle.load(open(os.getenv("DIABETES_MODEL", "diabetes_prediction_model.pkl"), "rb"))
+
+# Initialize FastAPI app
 app = FastAPI()
 
 # Input Schemas
@@ -59,10 +65,12 @@ class DiabetesInput(BaseModel):
     heart_rate: int
     daily_steps: int
 
+# Root endpoint
 @app.get("/")
 def root():
     return {"message": "HealthOracle FastAPI is up!"}
 
+# Obesity Prediction
 @app.post("/predict/obesity")
 def predict_obesity(input: ObesityInput):
     input_dict = input.dict()
@@ -70,6 +78,7 @@ def predict_obesity(input: ObesityInput):
     prediction = obesity_model.predict(input_df)
     return {"prediction": prediction[0]}
 
+# Insomnia Prediction
 @app.post("/predict/insomnia")
 def predict_insomnia(input: InsomniaInput):
     input_dict = input.dict()
@@ -77,6 +86,7 @@ def predict_insomnia(input: InsomniaInput):
     prediction = insomnia_model.predict(input_df)
     return {"prediction": prediction[0]}
 
+# Diabetes Prediction
 @app.post("/predict/diabetes")
 def predict_diabetes(input: DiabetesInput):
     input_list = list(input.dict().values())
